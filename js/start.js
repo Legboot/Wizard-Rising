@@ -19,9 +19,6 @@ class start extends Phaser.Scene{
 	preload()
 	{
 		this.load.image('start','assets/img/start.png');
-		this.load.image('button','assets/img/button.jpg');
-		//this.load.image('ground','assets/img/ground.png');
-		//this.load.audio('start_sound','assets/audio/start.mp3');
 	}
 
 	create()
