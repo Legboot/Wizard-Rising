@@ -8,6 +8,7 @@ var livesText;
 var lifeLostText;
 var textStyle;
 var loseButton;
+var cursorD;
 
 class start extends Phaser.Scene{
 
@@ -30,14 +31,14 @@ class start extends Phaser.Scene{
 		textStyle = { fontSize: '32px', fill: '#fff' };
 		scoreText = this.add.text(20, 20, 'puntos: 0', textStyle);
 		livesText = this.add.text(20, 50, 'vidas:'+ lives , textStyle);
-		lifeLostText = this.add.text(20,100, 'Has perdido, presiona cualquier tecla para continuar', textStyle);
+		lifeLostText = this.add.text(this.cameras.main.centerX - 100, this.cameras.main.centerY - 50, '¡Has perdido!', textStyle);
 		lifeLostText.visible = false;
 
 		// BOTON  AL PERDER
 
-		loseButton = this.add.text(100, 300, 'Volver a Intentar', textStyle)
+		loseButton = this.add.text(this.cameras.main.centerX - 180, this.cameras.main.centerY , 'Volver a Intentar', textStyle)
 							 .setInteractive({ useHandCursos: true })
-							 .on('pointerdown', () => this.volverIntentar())
+							 .on('pointerdown', () => this.volvesrIntentar())
 							 .on('pointerover', () => this.buttonHoverState())
 							 .on('pointerout',  () => this.buttonResetState());
 		loseButton.visible = false;
@@ -46,13 +47,15 @@ class start extends Phaser.Scene{
 		// SONIDO
 		//this.soundFX = this.sound.add('start_sound',{loop:'true'});
 		//this.soundFX.play();
-		//this.text = this.add.text(300,200,'Ninja Game', {font:'40px Impact'});
+		//this.text = this.add.text(300,200,'Wizard Game', {font:'40px Impact'});
 
 		// PLATAFORMAS
 		var platforms = this.physics.add.staticGroup();
 
 		// SET SCALE = ESCALA DE LA PLATAFORMA, REFRESH BODY = QUE NO TRANSPASE LA PLATAFORMA
-    	platforms.create(100, 550, 'ground').setScale(0.5,0.5).refreshBody();
+    	platforms.create(400, 570, 'ground').setScale(25,2).refreshBody();
+    	platforms.create(300, 500, 'ground');
+    	platforms.create(400, 400, 'ground');
 
     	// AGREGAR AL JUGADOR EN UNA POSICION ESPECIFICA
     	player = this.physics.add.sprite(100, 450, 'dude');
@@ -69,6 +72,7 @@ class start extends Phaser.Scene{
     	// SE ENCARGA DE LEER LOS CURSORES
 		cursors = this.input.keyboard.createCursorKeys();
 		cursorEnter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+		cursorD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
 	}
 
@@ -78,8 +82,6 @@ class start extends Phaser.Scene{
 		if(cursors.left.isDown)
 		{
 			player.setVelocityX(-160);
-			// ESTO FUE DE PRUEBA, AHORA HAY QUE USARLO CUANDO COLISIONE CON ALGO
-			this.perderVidas();
 		}
 		else if(cursors.right.isDown)
 		{	
@@ -93,9 +95,18 @@ class start extends Phaser.Scene{
 		if (cursors.up.isDown && player.body.touching.down)
 		{	
 			player.setVelocityY(-300);
-			// PRUEBA DE LOS PUNTOS
+
+		}
+
+		if(cursorEnter.isDown)
+		{
 			score++;
 			scoreText.setText('puntos: ' + score);
+		}
+
+		if(cursorD.isDown)
+		{
+			this.perderVidas();
 		}
 	}
 
