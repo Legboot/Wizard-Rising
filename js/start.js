@@ -9,6 +9,8 @@ var lifeLostText;
 var textStyle;
 var loseButton;
 var cursorD;
+var enemies;
+
 
 class start extends Phaser.Scene{
 
@@ -38,10 +40,22 @@ class start extends Phaser.Scene{
 
 		loseButton = this.add.text(this.cameras.main.centerX - 180, this.cameras.main.centerY , 'Volver a Intentar', textStyle)
 							 .setInteractive({ useHandCursos: true })
-							 .on('pointerdown', () => this.volvesrIntentar())
+							 .on('pointerdown', () => this.volverIntentar())
 							 .on('pointerover', () => this.buttonHoverState())
 							 .on('pointerout',  () => this.buttonResetState());
 		loseButton.visible = false;
+
+		// Monsters
+
+		enemies = this.physics.add.group({
+			key: 'enemy',
+			repeat: 1,
+			setXY: { x: 12, y: 0, stepX: 70 }
+		});
+
+		enemies.children.iterate(function (child) {
+			child.setBounce(0);
+		})
 
 
 		// SONIDO
@@ -59,15 +73,21 @@ class start extends Phaser.Scene{
 
     	// AGREGAR AL JUGADOR EN UNA POSICION ESPECIFICA
     	player = this.physics.add.sprite(100, 450, 'dude');
+   		this.scene.camera.follow(player);
 
     	//	REBOTE
     	player.setBounce(0.2);
 
     	// COLISION ENTRE TODO EL CUADRO 
     	player.setCollideWorldBounds(true);
+ 
 
-    	// COLISION ENTRE LAS PLATAFORMAS Y EL JUGADOR
+    	// COLISIONES
     	this.physics.add.collider(player, platforms);
+    	this.physics.add.collider(enemies, platforms);
+
+    	// OVERLAP
+    	this.physics.add.overlap(player, enemies, this.colisionJugadorEnemigo, null, this);
 
     	// SE ENCARGA DE LEER LOS CURSORES
 		cursors = this.input.keyboard.createCursorKeys();
@@ -100,13 +120,13 @@ class start extends Phaser.Scene{
 
 		if(cursorEnter.isDown)
 		{
-			score++;
-			scoreText.setText('puntos: ' + score);
+			//score++;
+			//this.actualizarPuntos(score);
 		}
 
 		if(cursorD.isDown)
 		{
-			this.perderVidas();
+			//this.perderVidas();
 		}
 	}
 
@@ -116,7 +136,7 @@ class start extends Phaser.Scene{
 
 		if(lives)
 		{
-			livesText.setText('vida: ' + lives);
+			this.actualizarVidas(lives);
 		}
 		else
 		{	
@@ -125,17 +145,43 @@ class start extends Phaser.Scene{
 			lifeLostText.visible = true;
 
 			// PAUSAR EL JUEGO
-			//this.scene.pause();
+			///this.scene.pause();
 
-			// ACTIVAR EL BOTON
+			// MOSTRAR EL BOTON DE VOLVER A INTENTAR
 			loseButton.visible = true;
 		}
+	}
+
+	actualizarVidas(vidas)
+	{
+		livesText.setText('vida: ' + vidas);
+	}
+
+	actualizarPuntos(puntos)
+	{
+		scoreText.setText('puntos: ' + puntos);
 	}
 
 	volverIntentar()
 	{	
 		lives = 5;
-		this.scene.restart();
+		this.scene.restart('start');
+	}
+
+	colisionJugadorEnemigo(enemy)
+	{
+		//this.perderVidas();
+		this.moverEnemigo();
+	}
+
+	colisionJugadorObjeto()
+	{
+
+	}
+
+	despausar()
+	{
+		this.scene.resume();
 	}
 
 	buttonHoverState()
@@ -146,5 +192,28 @@ class start extends Phaser.Scene{
 	buttonResetState()
 	{
 		loseButton.setStyle({ fill: '#fff' });
+	}
+
+	moverEnemigo()
+	{	
+		enemies.children.iterate(function (child){
+			
+			if(child.body.touching.left) 
+			{	
+				child.body.velocity.x = 100;
+			} 
+			else if (child.body.touching.right) 
+			{
+				child.body.velocity.x = -100;
+			} 
+			else if (child.body.touching.up) 
+			{
+				
+			} 
+			else if (child.body.touching.down) 
+			{
+				
+			}	
+		});
 	}
 }
