@@ -6,7 +6,7 @@ https://legboot.github.io/Wizard-Rising/
 
 Controles:
 - Moverse : cursores.
-- Saltar  : X. (con doble salto)
-- Disparar: Z.
-- Disparar arriba: Z + cursor de arriba;
+- Saltar  : Z. (con doble salto)
+- Disparar: X.
+- Disparar arriba: X + cursor de arriba;
 
