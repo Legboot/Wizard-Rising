@@ -5,6 +5,11 @@ var cursors;
 var platforms;
 var deathCounter = 0;
 var move = 70;
+var enemyMove = 20;
+
+var deathCounter = 0;
+var immune = 0;
+var immuneTime = 1000;
 
 //	FIRE
 var lastFired = 0;
@@ -21,9 +26,17 @@ var extrajump = maxjumps;
 //
 var camera;
 var layer;
-var speed=0;
+var speed = 0;
+var repetScene = false;
 
-///
+// TEXTS
+var lives = 3;
+var livesText;
+var loseText;
+
+// BUTTONS
+var loseButton;
+
 
 var FireBall = new Phaser.Class({
 
@@ -38,7 +51,7 @@ var FireBall = new Phaser.Class({
         this.setDepth(1);
         this.collideWorldBounds = true;
         this.speed = 100;
-        this.lifespan = 1500;
+        this.lifespan = 500;
         this.setScale(0.3,0.3);
         
         this._temp = new Phaser.Math.Vector2();
@@ -46,7 +59,7 @@ var FireBall = new Phaser.Class({
 
 	fire: function (player)
 	{
-		this.lifespan = 8000;
+		this.lifespan = 500;
 		
 		this.exploded = false;
 		this.setActive(true);	
@@ -75,6 +88,7 @@ var FireBall = new Phaser.Class({
 
         this.body.velocity.x *= 2;
         this.body.velocity.y *= 2;
+        console.log(this.body.velocity.y);
 	},
 
 	update: function (time, delta)
@@ -96,10 +110,6 @@ var FireBall = new Phaser.Class({
 		var boom = scene.physics.add.staticSprite(this.body.position.x, this.body.position.y);
 		boom.setScale(0.4,0.4);	
 		boom.anims.play('boom');
-		
-	    this.setActive(false);
-	    this.setVisible(false);
-	    this.body.stop();
 	    this.destroy();
     }
 });
@@ -115,7 +125,7 @@ var Enemy = new Phaser.Class({
         this.sprite = Phaser.Physics.Arcade.Sprite.call(this, scene,100,100,'cachapa');
 
         this.setDepth(1);
-
+        this.looking = "right";
         this.speed = 100;
         this.live = 3;
         this.checkOutOfBounds = false;
@@ -146,35 +156,28 @@ var Enemy = new Phaser.Class({
         //this.scene.physics.velocityFromRotation(angle, this.speed, this.body.velocity);
     },
 	*/
+
     update: function (time, delta)
     {
-    	if (Math.round(this.y) == Math.round(player.y + 8))
-    	{	
-  			
-    		if (Math.round(this.x) == Math.round(player.x)) 
-    		{	
 
-    		}
-	    		else
-	    		{	
-	    			this.body.velocity.x = -200;
-	    		}
-
+    	let canWalkRight = layer.hasTileAtWorldXY(this.x + 8, this.y + 10);
+    	let canWalkLeft = layer.hasTileAtWorldXY(this.x - 8, this.y + 10);
+    	
+    	if (canWalkRight && this.looking != "left")
+    	{
+    		this.body.velocity.x = enemyMove;
     	}
-    	
-    	
-    	/*
-       // var withinGame = spaceInner.contains(this.x, this.y);
+    	else
+    	{
+    		this.looking = "left";
 
-        if (!this.checkOutOfBounds && withinGame)
-        {
-            this.checkOutOfBounds = true;
-        }
-        else if (this.checkOutOfBounds && !withinGame)
-        {
-            this.kill();
-        }
-        */
+    		if (canWalkLeft && this.looking != "right")
+    			this.body.velocity.x = -enemyMove;
+    		else{
+    			this.body.velocity.x = 0;
+    			this.looking = "right";
+    		}	
+    	}
     },
     
     hit: function (x)
@@ -217,11 +220,29 @@ class start extends Phaser.Scene{
 		
 		camera.setPosition(0, 0);
 	    camera.setZoom(3);
+		
 	    
-	    generar(5,5);
+	    this.textStyle = { fontSize: '30px', fill: '#fff'};
+		livesText = this.add.text( 0 ,0 ,'vidas:'+ lives , this.textStyle);
+		livesText.setScrollFactor(0);
+		loseText = this.add.text('¡Has perdido!', this.textStyle);
+		loseText.visible = false;
+		
+
+		loseButton = this.add.text(50, 50, 'Volver a Intentar', this.textStyle)
+							 .setInteractive({ useHandCursos: true })
+							 .on('pointerdown', () => this.tryAgain())
+							 .on('pointerover', () => this.buttonHoverState())
+							 .on('pointerout',  () => this.buttonResetState());
+		loseButton.visible = false;
+
+	    generar(5,5,repetScene);
 	    
 	    var map = this.make.tilemap({ data: level, tileWidth: 16, tileHeight: 16 });
 	    var tiles = map.addTilesetImage('tiles');
+
+
+		//
 	    
 	    layer = map.createStaticLayer(0, tiles, 0, 0);
 	    layer.enableBody = true;
@@ -248,7 +269,8 @@ class start extends Phaser.Scene{
 	        repeat: 0,
 	        maxSize: 60,
 	        runChildUpdate: true,
-	        setXY: { x: 300, y: 100, stepX: 50 }
+	        setXY: { x: (startroom*16*8)+30, y: 60, stepX: 60 },
+	        setScale: { x: 0.3, y: 0.3 }
 	    });
 	        
 	    //var enemy = group.get(400,100);
@@ -268,12 +290,12 @@ class start extends Phaser.Scene{
 	    // OVERLAPS
 	    
 	    this.physics.add.overlap(fireBalls, enemies,  this.hitEnemy, this.checkBulletVsEnemy, this);
-	    //this.physics.add.overlap(fireBalls, layer, this.hitPlatform, null, this);
+	    this.physics.add.overlap(player, enemies, this.loseLive, null, this);
 	    
 	    // COLLIDES
 	    
 	    this.physics.add.collider(player, layer);
-    	this.physics.add.collider(enemies, platforms);
+    	this.physics.add.collider(enemies, layer);
     	this.physics.add.collider(fireBalls,layer,this.hitPlatform);
     	
 
@@ -317,6 +339,52 @@ class start extends Phaser.Scene{
 
 	}
 
+	tryAgain()
+	{	
+		lives = 3;
+		repetScene = true;
+		this.scene.restart();
+	}
+
+	loseLive()
+	{	
+
+		if(this.time.now > immune)
+		{
+			lives--;
+			immune = this.time.now + immuneTime;
+			console.log(lives);
+		}
+
+		if(lives)
+		{
+			this.updateLiveText(lives);
+		}
+		else
+		{	
+			//this.scene.pause();
+			loseButton.inputEnabled = true;
+			livesText.setText('vida: 0');
+			loseText.visible = true;
+			loseButton.visible = true;
+		}
+	}
+
+	updateLiveText(vidas)
+	{
+		livesText.setText('vidas: ' + vidas);
+	}
+
+	buttonHoverState()
+	{
+		loseButton.setStyle({ fill: '#ff0' });
+	}
+
+	buttonResetState()
+	{
+		loseButton.setStyle({ fill: '#fff' });
+	}
+
 	checkBulletVsEnemy (bullet, enemy)
 	{
 		return (bullet.active && enemy.active);
@@ -341,12 +409,12 @@ class start extends Phaser.Scene{
 	{
 		if(player.body.onFloor())
 		{
-			//console.log(speed);
-			if(speed >= 200){
-				console.log("Menos vida");
+			if(speed >= 200)
+			{
+				this.loseLive();
 				speed = 0;
 			}
-				
+
 	        jumpButton.timeDown = 0;
 	        extrajump = maxjumps;
 	    }
@@ -401,6 +469,7 @@ class start extends Phaser.Scene{
 		if(fireButton.isDown && this.time.now > lastFired)
 		{	
 			let fire = fireBalls.get();
+
 			if (fire)
 			{		
 				if (cursors.up.isDown)
@@ -540,30 +609,38 @@ class start extends Phaser.Scene{
 		level = tileset;
 	}
 	
-	function generar(w,h){
-			var Templates = {};
-			Templates.T0 = new Array();
-			Templates.T1 = new Array();
-			Templates.T2 = new Array();
-			Templates.T3 = new Array();
-			Templates.T4 = new Array();
-			
-			var matrix = matrixer(w,h);
-			matrix = path(matrix);
-			//No Importan
-			var template0 = {cols:8, type:0, array:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]};
-			Templates.T0.push(template0);
-			//Izq y Der
-			var template1 = {cols:8, type:1, array:[1,1,1,1,1,1,1,1,1,4,-1,1,1,-1,1,1,1,4,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,-1,-1,1,1,-1,-1,1,1,3,3,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1]};
-			Templates.T1.push(template1);
-			//Izq, Der y Abajo
-			var template2 = {cols:8, type:2, array:[1,1,1,1,1,1,1,1,1,1,1,2,-1,1,1,1,1,1,1,1,-1,1,-1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,1,1,1,-1,-1,-1,-1,-1,-1,-1,1,1,-1,3,-1,-1,-1,-1,-1,1,3,1,1,-1,-1,-1,1,1,1]};
-			Templates.T2.push(template2);
-			//Izq, Der y Arriba
-			var template3 = {cols:8, type:3, array:[1,-1,-1,-1,-1,-1,1,1,1,1,-1,-1,-1,-1,1,1,-1,1,1,-1,-1,-1,-1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,1,-1,-1,1,1,-1,1,1,-1,-1,-1,1,1,1,1,1,1,3,3,1,1,1,1,1,1,1,1,1,1,1]};
-			Templates.T3.push(template3);
-			//Izq, Der, Arriba y Abajo
-			var template4 = {cols:8, type:4, array:[1,-1,1,-1,-1,1,1,1,1,2,-1,-1,-1,1,1,1,1,1,-1,-1,-1,1,5,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,1,-1,-1,-1,-1,1,-1,1,-1,-1,-1,-1,3,1,3,1,1,-1,-1,3,1,1,1,1,-1,-1,-1,1,1]};
-			Templates.T4.push(template4);
-			makeMap(matrix,Templates);
+	function generar(w,h,news){
+
+			var x;
+
+			if (!news)
+			{
+				var Templates = {};
+				Templates.T0 = new Array();
+				Templates.T1 = new Array();
+				Templates.T2 = new Array();
+				Templates.T3 = new Array();
+				Templates.T4 = new Array();
+				
+				var matrix = matrixer(w,h);
+				matrix = path(matrix);
+				//No Importan
+				var template0 = {cols:8, type:0, array:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]};
+				Templates.T0.push(template0);
+				//Izq y Der
+				var template1 = {cols:8, type:1, array:[1,1,1,1,1,1,1,1,1,4,-1,1,1,-1,1,1,1,4,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,-1,-1,1,1,-1,-1,1,1,3,3,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1]};
+				Templates.T1.push(template1);
+				//Izq, Der y Abajo
+				var template2 = {cols:8, type:2, array:[1,1,1,1,1,1,1,1,1,1,1,2,-1,1,1,1,1,1,1,1,-1,1,-1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,1,1,1,-1,-1,-1,-1,-1,-1,-1,1,1,-1,3,-1,-1,-1,-1,-1,1,3,1,1,-1,-1,-1,1,1,1]};
+				Templates.T2.push(template2);
+				//Izq, Der y Arriba
+				var template3 = {cols:8, type:3, array:[1,-1,-1,-1,-1,-1,1,1,1,1,-1,-1,-1,-1,1,1,-1,1,1,-1,-1,-1,-1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,1,-1,-1,1,1,-1,1,1,-1,-1,-1,1,1,1,1,1,1,3,3,1,1,1,1,1,1,1,1,1,1,1]};
+				Templates.T3.push(template3);
+				//Izq, Der, Arriba y Abajo
+				var template4 = {cols:8, type:4, array:[1,-1,1,-1,-1,1,1,1,1,2,-1,-1,-1,1,1,1,1,1,-1,-1,-1,1,5,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,1,-1,-1,-1,-1,1,-1,1,-1,-1,-1,-1,3,1,3,1,1,-1,-1,3,1,1,1,1,-1,-1,-1,1,1]};
+				Templates.T4.push(template4);
+			     x = makeMap(matrix,Templates);
+			}
+			else
+				x
 	}
