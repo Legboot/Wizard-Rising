@@ -37,9 +37,7 @@ var loseText;
 // BUTTONS
 var loseButton;
 
-var swordX;
-
-var prueba;
+var sword;
 
 var FireBall = new Phaser.Class({
 
@@ -208,65 +206,60 @@ var Enemy = new Phaser.Class({
 
 });
 
-/*
+
 var Sword = new Phaser.Class({
 
-	 Extends: Phaser.Physics.Arcade.Sprite,
+	Extends: Phaser.Physics.Arcade.Sprite,
 
     initialize:
 
     function Sword (scene)
     {
         Phaser.Physics.Arcade.Sprite.call(this, scene, player.x , player.y ,'sword');
-    },
-
-    update: function(time, delta)
-    {
-    	console.log("ENTRO");
     }
 
 });
-*/
+
 
 class start extends Phaser.Scene{
 
 	preload()
 	{
-		this.load.image('start','assets/img/start.png');
-		this.load.image('bullet','assets/bullet.png');
-		this.load.image('cachapa','assets/New Piskel.png');
-		this.load.image('sword','assets/bullet.png');
-		this.load.spritesheet('Explosion','assets/explosion.bmp',{ frameWidth:16,frameHeight:16 });
-		this.load.spritesheet('dude','assets/dude.png',{ frameWidth:32,frameHeight:48 });
-	    this.load.image('tiles', 'assets/mytiles.png');
 		scene = this;
+		scene.load.image('start','assets/img/start.png');
+		scene.load.image('bullet','assets/bullet.png');
+		scene.load.image('cachapa','assets/New Piskel.png');
+		scene.load.image('sword','assets/bullet.png');
+		scene.load.spritesheet('Explosion','assets/explosion.bmp',{ frameWidth:16,frameHeight:16 });
+		scene.load.spritesheet('dude','assets/dude.png',{ frameWidth:32,frameHeight:48 });
+	    scene.load.image('tiles', 'assets/mytiles.png');
 	}
 
 	create()
 	{	
-		camera = this.cameras.main;
+		camera = scene.cameras.main;
 		
 		camera.setPosition(0, 0);
 	    camera.setZoom(3);
 		
 	    
-	    this.textStyle = { fontSize: '30px', fill: '#fff'};
-		livesText = this.add.text( 0 ,0 ,'vidas:'+ lives , this.textStyle);
+	    scene.textStyle = { fontSize: '30px', fill: '#fff'};
+		livesText = scene.add.text( 0 ,0 ,'vidas:'+ lives , this.textStyle);
 		livesText.setScrollFactor(0);
-		loseText = this.add.text('¡Has perdido!', this.textStyle);
+		loseText = scene.add.text('¡Has perdido!', this.textStyle);
 		loseText.visible = false;
 		
 
-		loseButton = this.add.text(50, 50, 'Volver a Intentar', this.textStyle)
+		loseButton = scene.add.text(50, 50, 'Volver a Intentar', this.textStyle)
 							 .setInteractive({ useHandCursos: true })
-							 .on('pointerdown', () => this.tryAgain())
-							 .on('pointerover', () => this.buttonHoverState())
-							 .on('pointerout',  () => this.buttonResetState());
+							 .on('pointerdown', () => scene.tryAgain())
+							 .on('pointerover', () => scene.buttonHoverState())
+							 .on('pointerout',  () => scene.buttonResetState());
 		loseButton.visible = false;
 
 	    generar(5,5,repetScene);
 	    
-	    var map = this.make.tilemap({ data: level, tileWidth: 16, tileHeight: 16 });
+	    var map = scene.make.tilemap({ data: level, tileWidth: 16, tileHeight: 16 });
 	    var tiles = map.addTilesetImage('tiles');
 
 
@@ -276,13 +269,13 @@ class start extends Phaser.Scene{
 	    layer.enableBody = true;
 	    map.setCollisionBetween(1, 3000);
 	 
-		fireBalls = this.physics.add.group({
+		fireBalls = scene.physics.add.group({
 	        classType: FireBall,
 	        maxSize: 30,
 	        runChildUpdate: true
     	});
 		
-		player = this.physics.add.sprite(0/*(startroom*16*8)+16*/, 60, 'dude');
+		player = scene.physics.add.sprite(0/*(startroom*16*8)+16*/, 60, 'dude');
 	    player.setScale(0.3,0.3);
 		player.setCollideWorldBounds(true);
 		player.looking = 'right';
@@ -290,7 +283,7 @@ class start extends Phaser.Scene{
 		// SEGUIR AL JUGADOR
 		camera.startFollow(player);
 	
-	    enemies = this.physics.add.group({
+	    enemies = scene.physics.add.group({
 	    	key: 'cachapa',
 	        classType: Enemy,
 	        repeat: 0,
@@ -300,91 +293,78 @@ class start extends Phaser.Scene{
 	        setScale: { x: 0.3, y: 0.3 }
 	    });
 
-	    /*
-	    prueba = this.add.group({
+	    //sword = scene.add.sprite(0/*(startroom*16*8)+16*/, 0, 'sword');
+
+	    sword = scene.physics.add.group({
 	    	key: 'sword',
 	    	classType: Sword,
-	    	setXY: { X: player.x, y: player.y },
+	    	setXY: { x: player.x, y: player.y },
 	    	setScale: { x: 0.3, y: 0.3 }
 	    });
-	    */
-	    //prueba.create('400','300','bullet');
-	   
-
-	    /*swordX = this.physics.add.group({
-	    	key: 'cc',
-	    	classType: Sword,
-	    	setXY: { X: player.x, y: player.y },
-	    	setScale: { x: 0.3, y: 0.3 },
-	    	setGravity: { x: 0, y: -100},
-	    	setSpeed: { x: 0, y: 0}
-	    });
-		*/
-	   // var swordX = this.physics.add.sprite(player.x, player.y, 'closeWeapon');
-
-	        
+		
 	    //var enemy = group.get(400,100);
 	    //enemy.setActive(true).setVisible(true).setTint(Phaser.Display.Color.RandomRGB().color);
 	    //console.log(enemy);
 
 	    //console.log(enemies);
 	    
-	    platforms = this.physics.add.staticGroup();
+	    platforms = scene.physics.add.staticGroup();
 	    
 	    // INPUTS
 	    	
-	    cursors = this.input.keyboard.createCursorKeys();
-	    fireButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
-	    jumpButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+	    cursors = scene.input.keyboard.createCursorKeys();
+	    fireButton = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
+	    jumpButton = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
 	    
 	    // OVERLAPS
 	    
-	   this.physics.add.overlap(fireBalls, enemies,  this.hitEnemy, this.checkBulletVsEnemy, this);
+	   scene.physics.add.overlap(fireBalls, enemies, scene.hitEnemy, scene.checkBulletVsEnemy, this);
 	   //this.physics.add.overlap(swordX, enemies,  this.hitEnemySword, null, this);
 	   // this.physics.add.overlap(player, enemies, this.loseLive, null, this);
 	    
 	    // COLLIDES
 	    
-	    this.physics.add.collider(player, layer);
-    	this.physics.add.collider(enemies, layer);
-    	this.physics.add.collider(fireBalls,layer,this.hitPlatform);
-    	this.physics.add.collider(player, enemies, this.BounceBack);
+	    scene.physics.add.collider(player, layer);
+    	scene.physics.add.collider(enemies, layer);
+    	scene.physics.add.collider(fireBalls,layer, scene.hitPlatform);
+    	scene.physics.add.collider(player, enemies, scene.BounceBack);
+    	scene.physics.add.collider(sword, enemies, scene.hitEnemy);
     	
 
 	    // platforms.create(400, 570, 'ground').setScale(25,2).refreshBody();
     	// platforms.create(300, 500, 'ground');
     	// platforms.create(400, 400, 'ground').setScale(10,1).refreshBody();
     	
-    	this.anims.create({
+    	scene.anims.create({
             key: 'boom',
-            frames: this.anims.generateFrameNumbers('Explosion', { start: 0, end: 5 }),
+            frames: scene.anims.generateFrameNumbers('Explosion', { start: 0, end: 5 }),
             frameRate: 20,
             repeat: 0,
             hideOnComplete:true
         });
     	
-    	this.anims.create({
+    	scene.anims.create({
             key: 'left',
-            frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+            frames: scene.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
             frameRate: 10,
             repeat: -1
         });
 
-        this.anims.create({
+        scene.anims.create({
             key: 'turnL',
             frames: [ { key: 'dude', frame: 0 } ],
             frameRate: 20
         });
         
-        this.anims.create({
+        scene.anims.create({
             key: 'turnR',
             frames: [ { key: 'dude', frame: 5 } ],
             frameRate: 20
         });
 
-        this.anims.create({
+        scene.anims.create({
             key: 'right',
-            frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+            frames: scene.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
             frameRate: 10,
             repeat: -1
         });
@@ -395,7 +375,7 @@ class start extends Phaser.Scene{
 	{	
 		lives = 3;
 		repetScene = true;
-		this.scene.restart();
+		scene.scene.restart();
 	}
 
 
@@ -457,14 +437,10 @@ class start extends Phaser.Scene{
 	{
 	}
 
-	hitEnemy (bullet, enemy)
-	{
-		bullet.kill();
-		enemy.hit(1);
-	}
-
-	hitEnemySword (sword, enemy)
-	{
+	hitEnemy (attack, enemy)
+	{	
+		if(attack.constructor.name == 'fireBall');
+			bullet.kill();
 		enemy.hit(1);
 	}
 
@@ -475,6 +451,12 @@ class start extends Phaser.Scene{
 	
 	update()
 	{
+
+		// Mover la espada con el jugadoe
+		sword.children.entries[0].x = player.x+10;
+		sword.children.entries[0].y = player.y;
+
+
 		if(player.body.onFloor())
 		{
 			if(speed >= 200)
