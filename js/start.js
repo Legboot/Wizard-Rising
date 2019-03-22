@@ -37,6 +37,9 @@ var loseText;
 // BUTTONS
 var loseButton;
 
+var swordX;
+
+var prueba;
 
 var FireBall = new Phaser.Class({
 
@@ -54,13 +57,12 @@ var FireBall = new Phaser.Class({
         this.lifespan = 500;
         this.setScale(0.3,0.3);
         
-        this._temp = new Phaser.Math.Vector2();
+        //this._temp = new Phaser.Math.Vector2();
 	},
 
 	fire: function (player)
 	{
 		this.lifespan = 500;
-		
 		this.exploded = false;
 		this.setActive(true);	
 		this.setVisible(true);
@@ -120,73 +122,29 @@ var Enemy = new Phaser.Class({
 
     initialize:
 
-    function Enemy (scene)
+    function Enemy (scenez)
     {
         this.sprite = Phaser.Physics.Arcade.Sprite.call(this, scene,100,100,'cachapa');
-
         this.setDepth(1);
         this.looking = "right";
         this.speed = 100;
         this.live = 3;
         this.checkOutOfBounds = false;
        	this.enableBody = true;
-        //this.target = new Phaser.Math.Vector2();
     },
-    /*
-    launch: function ()
-    {
-      //  this.play('mine-anim');
-
-        this.checkOutOfBounds = false;
-
-      //  var p = Phaser.Geom.Rectangle.RandomOutside(spaceOuter, spaceInner);
-        
-      //  spaceInner.getRandomPoint(this.target);
-
-        this.speed = Phaser.Math.Between(100, 400);
-
-        this.setActive(true);
-        this.setVisible(true);
-        //this.setPosition(p.x, p.y);
-
-       // this.body.reset(p.x, p.y);
-
-        //var angle = Phaser.Math.Angle.BetweenPoints(p, this.target);
-
-        //this.scene.physics.velocityFromRotation(angle, this.speed, this.body.velocity);
-    },
-	*/
 
     update: function (time, delta)
     {
-
-    	let canWalkRight = layer.hasTileAtWorldXY(this.x + 8, this.y + 10);
-    	let canWalkLeft = layer.hasTileAtWorldXY(this.x - 8, this.y + 10);
-    	
-    	if (canWalkRight && this.looking != "left")
-    	{
-    		this.body.velocity.x = enemyMove;
-    	}
-    	else
-    	{
-    		this.looking = "left";
-
-    		if (canWalkLeft && this.looking != "right")
-    			this.body.velocity.x = -enemyMove;
-    		else{
-    			this.body.velocity.x = 0;
-    			this.looking = "right";
-    		}	
-    	}
+    	//this.patrolX(0);
+    	//this.follow(1);
+    	//this.patrolY();
     },
     
     hit: function (x)
     {
     	this.live = this.live - x;
     	if (this.live <= 0)
-    	{
     		this.kill();
-    	}
     },
 
     kill: function ()
@@ -195,10 +153,80 @@ var Enemy = new Phaser.Class({
         this.setVisible(false);
         this.body.stop();
         this.destroy();
-       // this.scene.launchEnemy();
+    },
+
+    attack: function(follow)
+    {
+    	
+    	
+    },
+
+    follow: function(follow)
+    {
+    	if(follow == 1)
+    	{
+    		if(Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y) < 50 && Phaser.Math.RoundTo(player.y + 2) == Phaser.Math.RoundTo(this.y))
+    	  		scene.physics.moveTo(this, player.x, player.y, 20);
+    	}
+    },
+
+    patrolX: function()
+    {	
+    	var canWalkRight = layer.hasTileAtWorldXY(this.x + 8, this.y + 10);
+    	var canWalkLeft =  layer.hasTileAtWorldXY(this.x - 8, this.y + 10);
+    
+    	if (canWalkRight && this.looking != "left")
+    		this.body.velocity.x = enemyMove;
+    	else
+    	{
+    		this.looking = "left";
+
+    		if (canWalkLeft && this.looking != "right")
+    			this.body.velocity.x = -enemyMove;
+    		else
+    		{
+    			this.body.velocity.x = 0;
+    			this.looking = "right";
+    		}	
+    	}
+    },
+
+    patrolY: function()
+    {	
+
+    	if(this.body.blocked.down)
+    		this.flag = false;
+
+    	if(!this.body.blocked.up && !this.flag)
+    		this.body.velocity.y = -enemyMove;
+    	else
+    	{
+    		this.body.velocity.y = +enemyMove;
+    		this.flag = true;
+    	}
     }
 
 });
+
+/*
+var Sword = new Phaser.Class({
+
+	 Extends: Phaser.Physics.Arcade.Sprite,
+
+    initialize:
+
+    function Sword (scene)
+    {
+        Phaser.Physics.Arcade.Sprite.call(this, scene, player.x , player.y ,'sword');
+    },
+
+    update: function(time, delta)
+    {
+    	console.log("ENTRO");
+    }
+
+});
+*/
 
 class start extends Phaser.Scene{
 
@@ -207,6 +235,7 @@ class start extends Phaser.Scene{
 		this.load.image('start','assets/img/start.png');
 		this.load.image('bullet','assets/bullet.png');
 		this.load.image('cachapa','assets/New Piskel.png');
+		this.load.image('sword','assets/bullet.png');
 		this.load.spritesheet('Explosion','assets/explosion.bmp',{ frameWidth:16,frameHeight:16 });
 		this.load.spritesheet('dude','assets/dude.png',{ frameWidth:32,frameHeight:48 });
 	    this.load.image('tiles', 'assets/mytiles.png');
@@ -215,7 +244,6 @@ class start extends Phaser.Scene{
 
 	create()
 	{	
-		//this.image = this.add.image(400,300,'start');
 		camera = this.cameras.main;
 		
 		camera.setPosition(0, 0);
@@ -254,15 +282,14 @@ class start extends Phaser.Scene{
 	        runChildUpdate: true
     	});
 		
-		player = this.physics.add.sprite((startroom*16*8)+16, 60, 'dude');
+		player = this.physics.add.sprite(0/*(startroom*16*8)+16*/, 60, 'dude');
 	    player.setScale(0.3,0.3);
 		player.setCollideWorldBounds(true);
 		player.looking = 'right';
 		
+		// SEGUIR AL JUGADOR
 		camera.startFollow(player);
-		
-		//var group = this.add.group();
-    	
+	
 	    enemies = this.physics.add.group({
 	    	key: 'cachapa',
 	        classType: Enemy,
@@ -272,6 +299,29 @@ class start extends Phaser.Scene{
 	        setXY: { x: (startroom*16*8)+30, y: 60, stepX: 60 },
 	        setScale: { x: 0.3, y: 0.3 }
 	    });
+
+	    /*
+	    prueba = this.add.group({
+	    	key: 'sword',
+	    	classType: Sword,
+	    	setXY: { X: player.x, y: player.y },
+	    	setScale: { x: 0.3, y: 0.3 }
+	    });
+	    */
+	    //prueba.create('400','300','bullet');
+	   
+
+	    /*swordX = this.physics.add.group({
+	    	key: 'cc',
+	    	classType: Sword,
+	    	setXY: { X: player.x, y: player.y },
+	    	setScale: { x: 0.3, y: 0.3 },
+	    	setGravity: { x: 0, y: -100},
+	    	setSpeed: { x: 0, y: 0}
+	    });
+		*/
+	   // var swordX = this.physics.add.sprite(player.x, player.y, 'closeWeapon');
+
 	        
 	    //var enemy = group.get(400,100);
 	    //enemy.setActive(true).setVisible(true).setTint(Phaser.Display.Color.RandomRGB().color);
@@ -289,14 +339,16 @@ class start extends Phaser.Scene{
 	    
 	    // OVERLAPS
 	    
-	    this.physics.add.overlap(fireBalls, enemies,  this.hitEnemy, this.checkBulletVsEnemy, this);
-	    this.physics.add.overlap(player, enemies, this.loseLive, null, this);
+	   this.physics.add.overlap(fireBalls, enemies,  this.hitEnemy, this.checkBulletVsEnemy, this);
+	   //this.physics.add.overlap(swordX, enemies,  this.hitEnemySword, null, this);
+	   // this.physics.add.overlap(player, enemies, this.loseLive, null, this);
 	    
 	    // COLLIDES
 	    
 	    this.physics.add.collider(player, layer);
     	this.physics.add.collider(enemies, layer);
     	this.physics.add.collider(fireBalls,layer,this.hitPlatform);
+    	this.physics.add.collider(player, enemies, this.BounceBack);
     	
 
 	    // platforms.create(400, 570, 'ground').setScale(25,2).refreshBody();
@@ -346,9 +398,12 @@ class start extends Phaser.Scene{
 		this.scene.restart();
 	}
 
+
 	loseLive()
 	{	
 
+		this.bounc();
+		/*
 		if(this.time.now > immune)
 		{
 			lives--;
@@ -368,6 +423,14 @@ class start extends Phaser.Scene{
 			loseText.visible = true;
 			loseButton.visible = true;
 		}
+		*/
+	}
+
+	bounceBack(p, e)
+	{
+		console.log(this.e);
+		p.body.velocity.x = +100;
+		e.body.velocity.y = -10;
 	}
 
 	updateLiveText(vidas)
@@ -397,6 +460,11 @@ class start extends Phaser.Scene{
 	hitEnemy (bullet, enemy)
 	{
 		bullet.kill();
+		enemy.hit(1);
+	}
+
+	hitEnemySword (sword, enemy)
+	{
 		enemy.hit(1);
 	}
 
